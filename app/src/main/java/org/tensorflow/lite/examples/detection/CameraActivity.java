@@ -10,10 +10,13 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +25,8 @@ import android.os.Trace;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+
+import android.speech.tts.TextToSpeech;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -38,8 +43,15 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 public abstract class CameraActivity extends AppCompatActivity
     implements OnImageAvailableListener,
@@ -51,6 +63,12 @@ public abstract class CameraActivity extends AppCompatActivity
   private static final int PERMISSIONS_REQUEST = 1;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
+
+  public static boolean label = true;
+  public static boolean confedence = false;
+ // public static PriorityQueue <Map.Entry<Integer,String>> queue = new PriorityQueue<>(80,(a, b)->Integer.compare(b.getKey(),a.getKey()));
+ // public static Map<String,Integer> map = new HashMap<>();
+  public static HashMap<String, Integer> queue = new HashMap<String,Integer>();
   protected int previewWidth = 0;
   protected int previewHeight = 0;
   private boolean debug = false;
@@ -73,6 +91,9 @@ public abstract class CameraActivity extends AppCompatActivity
   private ImageView plusImageView, minusImageView;
   private SwitchCompat apiSwitchCompat;
   private TextView threadsTextView;
+  public static SoundPool soundPool;
+  public static int sound1[] = new int[80];
+
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -90,7 +111,7 @@ public abstract class CameraActivity extends AppCompatActivity
     } else {
       requestPermission();
     }
-    //My code
+
     {
 
       Button buttonL = findViewById(R.id.button);
@@ -101,9 +122,107 @@ public abstract class CameraActivity extends AppCompatActivity
         startActivity(i);
       });
       buttonR.setOnClickListener(v -> {
-        Intent i = new Intent(getApplicationContext(),Scene.class);
-        startActivity(i);
+        Intent i = new Intent(this,SpeechActivity.class);
+          Intent j = new Intent(getApplicationContext(),Scene.class);
+
+        startActivity(j);
       });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build();
+
+            soundPool = new SoundPool.Builder()
+                    .setMaxStreams(6)
+                    .setAudioAttributes(audioAttributes)
+                    .build();
+        } else {
+            soundPool = new SoundPool(6, AudioManager.STREAM_MUSIC, 0);
+        }
+
+
+        sound1[0] = soundPool.load(this, R.raw.person, 1);
+        sound1[1] = soundPool.load(this, R.raw.bicycle, 1);
+        sound1[2] = soundPool.load(this, R.raw.car, 1);
+        sound1[3] = soundPool.load(this, R.raw.motorcycle, 1);
+        sound1[4] = soundPool.load(this, R.raw.airplane, 1);
+        sound1[5] = soundPool.load(this, R.raw.bus, 1);
+        sound1[6] = soundPool.load(this, R.raw.train, 1);
+        sound1[7] = soundPool.load(this, R.raw.truck, 1);
+        sound1[8] = soundPool.load(this, R.raw.boat, 1);
+        sound1[9] = soundPool.load(this, R.raw.traffic_light, 1);
+        sound1[10] = soundPool.load(this, R.raw.fire_hydrant, 1);
+        sound1[11] = soundPool.load(this, R.raw.stop_sign, 1);
+        sound1[12] = soundPool.load(this, R.raw.parking_meter, 1);
+        sound1[13] = soundPool.load(this, R.raw.bench, 1);
+        sound1[14] = soundPool.load(this, R.raw.bird, 1);
+        sound1[15] = soundPool.load(this, R.raw.cat, 1);
+        sound1[16] = soundPool.load(this, R.raw.dog, 1);
+        sound1[17] = soundPool.load(this, R.raw.horse, 1);
+        sound1[18] = soundPool.load(this, R.raw.sheep, 1);
+        sound1[19] = soundPool.load(this, R.raw.cow, 1);
+        sound1[20] = soundPool.load(this, R.raw.elephant, 1);
+        sound1[21] = soundPool.load(this, R.raw.bear, 1);
+        sound1[22] = soundPool.load(this, R.raw.zebra, 1);
+        sound1[23] = soundPool.load(this, R.raw.giraffe, 1);
+        sound1[24] = soundPool.load(this, R.raw.backpack, 1);
+        sound1[25] = soundPool.load(this, R.raw.umbrella, 1);
+        sound1[26] = soundPool.load(this, R.raw.handbag, 1);
+        sound1[27] = soundPool.load(this, R.raw.tie, 1);
+        sound1[28] = soundPool.load(this, R.raw.suitcase, 1);
+        sound1[29] = soundPool.load(this, R.raw.frisbee, 1);
+        sound1[30] = soundPool.load(this, R.raw.skis, 1);
+        sound1[31] = soundPool.load(this, R.raw.snowboard, 1);
+        sound1[32] = soundPool.load(this, R.raw.sports_ball, 1);
+        sound1[33] = soundPool.load(this, R.raw.kite, 1);
+        sound1[34] = soundPool.load(this, R.raw.baseball_bat, 1);
+        sound1[35] = soundPool.load(this, R.raw.baseball_glove, 1);
+        sound1[36] = soundPool.load(this, R.raw.skateboard, 1);
+        sound1[37] = soundPool.load(this, R.raw.surfboard, 1);
+        sound1[38] = soundPool.load(this, R.raw.tennis_racket, 1);
+        sound1[39] = soundPool.load(this, R.raw.bottle, 1);
+        sound1[40] = soundPool.load(this, R.raw.wine_glass, 1);
+        sound1[41] = soundPool.load(this, R.raw.cup, 1);
+        sound1[42] = soundPool.load(this, R.raw.fork, 1);
+        sound1[43] = soundPool.load(this, R.raw.knife, 1);
+        sound1[44] = soundPool.load(this, R.raw.spoon, 1);
+        sound1[45] = soundPool.load(this, R.raw.bowl, 1);
+        sound1[46] = soundPool.load(this, R.raw.banana, 1);
+        sound1[47] = soundPool.load(this, R.raw.apple, 1);
+        sound1[48] = soundPool.load(this, R.raw.sandwich, 1);
+        sound1[49] = soundPool.load(this, R.raw.orange, 1);
+        sound1[50] = soundPool.load(this, R.raw.broccoli, 1);
+        sound1[51] = soundPool.load(this, R.raw.carrot, 1);
+        sound1[52] = soundPool.load(this, R.raw.hot_dog, 1);
+        sound1[53] = soundPool.load(this, R.raw.pizza, 1);
+        sound1[54] = soundPool.load(this, R.raw.donut, 1);
+        sound1[55] = soundPool.load(this, R.raw.cake, 1);
+        sound1[56] = soundPool.load(this, R.raw.chair, 1);
+        sound1[57] = soundPool.load(this, R.raw.couch, 1);
+        sound1[58] = soundPool.load(this, R.raw.potted_plant, 1);
+        sound1[59] = soundPool.load(this, R.raw.bed, 1);
+        sound1[60] = soundPool.load(this, R.raw.dining_table, 1);
+        sound1[61] = soundPool.load(this, R.raw.toilet, 1);
+        sound1[62] = soundPool.load(this, R.raw.tv, 1);
+        sound1[63] = soundPool.load(this, R.raw.laptop, 1);
+        sound1[64] = soundPool.load(this, R.raw.mouse, 1);
+        sound1[65] = soundPool.load(this, R.raw.remote, 1);
+        sound1[66] = soundPool.load(this, R.raw.keyboard, 1);
+        sound1[67] = soundPool.load(this, R.raw.cell_phone, 1);
+        sound1[68] = soundPool.load(this, R.raw.microwave, 1);
+        sound1[69] = soundPool.load(this, R.raw.oven, 1);
+        sound1[70] = soundPool.load(this, R.raw.toaster, 1);
+        sound1[71] = soundPool.load(this, R.raw.sink, 1);
+        sound1[72] = soundPool.load(this, R.raw.refrigerator, 1);
+        sound1[73] = soundPool.load(this, R.raw.book, 1);
+        sound1[74] = soundPool.load(this, R.raw.clock, 1);
+        sound1[75] = soundPool.load(this, R.raw.vase, 1);
+        sound1[76] = soundPool.load(this, R.raw.scissors, 1);
+        sound1[77] = soundPool.load(this, R.raw.teddy_bear, 1);
+        sound1[78] = soundPool.load(this, R.raw.hair_drier, 1);
+        sound1[79] = soundPool.load(this, R.raw.toothbrush, 1);
 
 
 
@@ -176,18 +295,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   }
-  //My methods
-/*
 
-
-  protected  void  buttonLClick(View v){
-    Intent i = new Intent(getApplicationContext(),Face.class);
-    startActivity(i);
-  }
-
-*/
-
-  // Finished
   protected int[] getRgbBytes() {
     imageConverter.run();
     return rgbBytes;
@@ -352,6 +460,8 @@ public abstract class CameraActivity extends AppCompatActivity
   public synchronized void onDestroy() {
     LOGGER.d("onDestroy " + this);
     super.onDestroy();
+      soundPool.release();
+      soundPool = null;
   }
 
   protected synchronized void runInBackground(final Runnable r) {

@@ -66,7 +66,7 @@ import java.util.List;
  * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
  * objects.
  */
-public class DetectorActivity2 extends CameraActivity2 implements OnImageAvailableListener {
+public class DetectorActivity2 extends CameraActivity2 implements OnImageAvailableListener{
   private static final Logger LOGGER_2 = new Logger();
 
 

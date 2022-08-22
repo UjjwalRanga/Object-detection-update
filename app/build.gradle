@@ -4,11 +4,11 @@ apply plugin: 'de.undercouch.download'
 android {
     compileSdkVersion 30
     defaultConfig {
-        applicationId "org.tensorflow.lite.examples.detection"
+        applicationId "HELP.BLIND.PROJECT_DR.KAPIL_MAYANK_UJJWAL"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "1.45"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
